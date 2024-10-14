@@ -11,23 +11,11 @@ import os
 import re
 
 BitArraySort = ArraySort(BitVecSort(32), BitVecSort(8))
-solver = Solver(logFile="z3_solver.log")
-
-symbol_table = set()
 
 # maps symbols to BitArraySort, which plays a role as "decls" in parse_smt2_file
 # see docs of parse_smt2_string
-declarations = {}
 
-def get_directory(prompt):
-    while True:
-        directory = input(prompt)
-        if os.path.isdir(directory):
-            return directory
-        else:
-            print(f"Directory '{directory}' does not exist. Please try again.")
-
-def find_smt2_pairs(directory):
+def find_smt2_pairs(directory, symbol_table):
     """
     parse a directory to get path constraint and effect pairs.
     returns a list of pairs, (fst, snd).
@@ -76,35 +64,31 @@ def find_smt2_pairs(directory):
             symbol_table.add(symbol)
     return res_pairs
 
-def check_equivalence(s : Solver, P : AstVector, Q : AstVector) -> bool:
+def check_formula_equivalence(s : Solver, P : AstVector, Q : AstVector) -> bool:
     neg_equiv = Or(And(P, Not(Q)), And(Not(P), Q))
     return s.check(neg_equiv) == unsat
 
-if __name__ == "__main__":
+def check_equivalence(dirA : str, dirB : str) -> bool:
 
-    dirA, dirB = None, None
+    sym = set()
+    pA, pB = find_smt2_pairs(dirA, sym), find_smt2_pairs(dirB, sym)
 
-    dirA = "/home/lyd24/klee/klee_fork/examples/equivalence_check/2/A/klee-last"
-    dirB = "/home/lyd24/klee/klee_fork/examples/equivalence_check/2/B/klee-last"
+    print(f"Found {len(pA)} paths for program A")
+    print(f"Found {len(pB)} paths for program B")
 
-    if dirA is None: dirA = get_directory("Directory of program A: ")
-    if dirB is None: dirB = get_directory("Directory of program B: ")
-
-    pathsA, pathsB = find_smt2_pairs(dirA), find_smt2_pairs(dirB)
-
-    print(f"Found {len(pathsA)} paths for program A")
-    print(f"Found {len(pathsB)} paths for program B")
-
-    for symbol in symbol_table:
-        declarations[symbol] = Const(symbol, BitArraySort)
+    declarations = {}
+    for s in sym:
+        declarations[s] = Const(s, BitArraySort)
 
     isEquivalent = True
 
-    for pathA, valueA in pathsA:
+    solver = Solver(logFile="z3_solver.log")
+
+    for pathA, valueA in pA:
         solver.push()
         constraintA = parse_smt2_file(pathA, decls=declarations)
         solver.add(constraintA)
-        for pathB, valueB in pathsB:
+        for pathB, valueB in pB:
             solver.push()
             constraintB = parse_smt2_file(pathB, decls=declarations)
             solver.add(constraintB)
@@ -115,11 +99,11 @@ if __name__ == "__main__":
             effectA = And(parse_smt2_string(valueA, decls=declarations))
             effectB = And(parse_smt2_string(valueB, decls=declarations))
 
-            if check_equivalence(solver, effectA, effectB) == False:
+            if check_formula_equivalence(solver, effectA, effectB) == False:
                 print(f"Paths {pathA} and {pathB} are not equivalent")
                 isEquivalent = False
                 break
             solver.pop()
         if not isEquivalent: break
         solver.pop()
-    print("equivalent" if isEquivalent else "not equivalent")
+    return isEquivalent
