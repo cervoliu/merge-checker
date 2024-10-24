@@ -2,3 +2,6 @@ __pycache__
 *.log
 *.smt2
 tmp/
+
+# .vscode
+*.code-workspace
