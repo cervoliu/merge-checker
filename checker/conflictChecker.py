@@ -14,7 +14,11 @@ BitArraySort = ArraySort(BitVecSort(32), BitVecSort(8))
 # maps symbols to BitArraySort, which plays a role as "decls" in parse_smt2_file
 # see docs of parse_smt2_string
 
-def check_path_conflict_free(s : Solver, O, A, B, M) -> bool:
+def check_path_conflict(s : Solver, O, A, B, M) -> bool:
+    """
+    Return 0 if the paths are conflict free, otherwise return a bit mask
+    representing the conflict type.
+    """
     eqOA = check_path_equivalence(s, O, A)
     eqOB = check_path_equivalence(s, O, B)
     eqAM = check_path_equivalence(s, A, M)
@@ -23,7 +27,12 @@ def check_path_conflict_free(s : Solver, O, A, B, M) -> bool:
     assertion1 = And(Not(eqOA), Not(eqAM))
     assertion2 = And(Not(eqOB), Not(eqBM))
     assertion3 = And(Not(eqAM), Not(eqBM))
-    return s.check(Or(assertion1, assertion2, assertion3)) == unsat
+    
+    res = 0
+    if s.check(assertion1) == sat: res |= 1
+    if s.check(assertion2) == sat: res |= 2
+    if s.check(assertion3) == sat: res |= 4
+    return res
 
 def check_merge_conflict_free(dirO : str, dirA : str, dirB : str, dirM : str) -> bool:
 
@@ -76,7 +85,7 @@ def check_merge_conflict_free(dirO : str, dirA : str, dirB : str, dirM : str) ->
                     effectB = And(parse_smt2_string(valueB, decls=declarations))
                     effectM = And(parse_smt2_string(valueM, decls=declarations))
 
-                    if not check_path_conflict_free(solver, effectO, effectA, effectB, effectM):
+                    if check_path_conflict(solver, effectO, effectA, effectB, effectM):
                         isConflictFree = False
                         break
 
