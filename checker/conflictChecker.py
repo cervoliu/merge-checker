@@ -29,9 +29,9 @@ def check_path_conflict(s : Solver, O, A, B, M) -> bool:
     assertion3 = And(Not(eqAM), Not(eqBM))
     
     res = 0
-    if s.check(assertion1) == sat: res |= 1
-    if s.check(assertion2) == sat: res |= 2
-    if s.check(assertion3) == sat: res |= 4
+    if s.check(assertion1) == sat: res |= 1  # M should be A
+    if s.check(assertion2) == sat: res |= 2  # M should be B
+    if s.check(assertion3) == sat: res |= 4  # M should be either A or B
     return res
 
 def check_merge_conflict_free(dirO : str, dirA : str, dirB : str, dirM : str) -> bool:
