@@ -17,13 +17,13 @@ def check_path_equivalence(s : Solver, P, Q) -> bool:
     neg_equiv = Or(And(P, Not(Q)), And(Not(P), Q))
     return s.check(neg_equiv) == unsat
 
-def check_program_equivalence(dirA : str, dirB : str) -> bool:
+def check_program_equivalence(dirA : str, dirB : str, verbose : bool) -> bool:
 
     sym = set()
     pA, pB = find_smt2_pairs(dirA, sym), find_smt2_pairs(dirB, sym)
-
-    print(f"Found {len(pA)} paths for program A")
-    print(f"Found {len(pB)} paths for program B")
+    if verbose:
+        print(f"Found {len(pA)} paths for program A")
+        print(f"Found {len(pB)} paths for program B")
 
     declarations = {}
     for s in sym:
@@ -48,8 +48,8 @@ def check_program_equivalence(dirA : str, dirB : str) -> bool:
             effectA = And(parse_smt2_string(valueA, decls=declarations))
             effectB = And(parse_smt2_string(valueB, decls=declarations))
 
-            if check_path_equivalence(solver, effectA, effectB) == False:
-                print(f"Paths {pathA} and {pathB} are not equivalent")
+            if not check_path_equivalence(solver, effectA, effectB):
+                if verbose: print(f"Paths {pathA} and {pathB} are not equivalent")
                 isEquivalent = False
                 break
             solver.pop()

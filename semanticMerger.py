@@ -6,15 +6,15 @@ import shutil
 
 def handle_trivial():
     # handle trivial cases
-    if check_program_equivalence(f"{tmp}/A", f"{tmp}/B"):
+    if check_program_equivalence(f"{tmp}/A", f"{tmp}/B", verbose=False):
         shutil.copyfile(sourceA_path, os.path.join(source_dir_path, "merge.c"))
         print("A and B are semantically equivalent, simply adopt either")
         exit(0)
-    if check_program_equivalence(f"{tmp}/A", f"{tmp}/O"):
+    if check_program_equivalence(f"{tmp}/A", f"{tmp}/O", verbose=False):
         shutil.copyfile(sourceB_path, os.path.join(source_dir_path, "merge.c"))
         print("A and O are semantically equivalent, simply adopt B")
         exit(0)
-    if check_program_equivalence(f"{tmp}/B", f"{tmp}/O"):
+    if check_program_equivalence(f"{tmp}/B", f"{tmp}/O", verbose=False):
         shutil.copyfile(sourceA_path, os.path.join(source_dir_path, "merge.c"))
         print("B and O are semantically equivalent, simply adopt A")
         exit(0)
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     klee_exe_path = klee_build_path + "/bin/klee"
 
     source_dir_path = None
-    source_dir_path = "/home/lyd24/merge-benchmark/klee/unsafe/4"
+    source_dir_path = "~/merge-benchmark/klee/unsafe/4"
     if source_dir_path is None:
         raise ValueError("Source directory path is not set")
     
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     os.system(f"{klee_exe_path} {klee_options} --output-dir={tmp}/A {tmp}/A.bc {program_args} {redirect_output}")
     os.system(f"{klee_exe_path} {klee_options} --output-dir={tmp}/B {tmp}/B.bc {program_args} {redirect_output}")
 
-    # handle_trivial()
+    handle_trivial()
 
     record = get_merge_summary(f"{tmp}/O", f"{tmp}/A", f"{tmp}/B")
     print(record)
@@ -119,6 +119,6 @@ if __name__ == "__main__":
     
     merged = getEdits.apply(edits_M, shared)
 
-    with open(os.path.join(source_dir_path, "M.c"), "w") as f:
+    with open(os.path.join(source_dir_path, "merge.c"), "w") as f:
         for line in merged:
             f.write(line)
