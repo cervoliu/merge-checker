@@ -33,16 +33,17 @@ if __name__ == "__main__":
     source_dir_path = "~/merge-benchmark/klee/unsafe/4"
     if source_dir_path is None:
         raise ValueError("Source directory path is not set")
+    source_dir_path = os.path.expanduser(source_dir_path)
     
     sourceO_path = source_dir_path + "/O.c"
     sourceA_path = source_dir_path + "/A.c"
     sourceB_path = source_dir_path + "/B.c"
     
-    if not os.path.isfile(os.path.expanduser(sourceO_path)):
+    if not os.path.isfile(sourceO_path):
         raise FileNotFoundError(f"Source file O not found: {sourceO_path}")
-    if not os.path.isfile(os.path.expanduser(sourceA_path)):
+    if not os.path.isfile(sourceA_path):
         raise FileNotFoundError(f"Source file A not found: {sourceA_path}")
-    if not os.path.isfile(os.path.expanduser(sourceB_path)):
+    if not os.path.isfile(sourceB_path):
         raise FileNotFoundError(f"Source file B not found: {sourceB_path}")
     
     shared, edits_A, edits_O, edits_B = getEdits.compute_shared_and_edits(sourceA_path, sourceO_path, sourceB_path)
@@ -122,3 +123,4 @@ if __name__ == "__main__":
     with open(os.path.join(source_dir_path, "merge.c"), "w") as f:
         for line in merged:
             f.write(line)
+        print("merged file saved")
